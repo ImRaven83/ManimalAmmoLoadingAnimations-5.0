@@ -14,6 +14,7 @@ using System.Reflection;
 namespace Manimal.LoadAmmoAnim
 {
     [BepInPlugin(BuildInfo.ModGuid, "Manimal-LoadAmmoAnim", BuildInfo.Version)]
+    [BepInDependency("com.wtt.commonlib", "3.0.6")]
     // soft-dep on CLA so we load AFTER it. our plugin's GUID sorts alphabetically
     // before CLA's, which means without this hint BepInEx loads us first — and our
     // Awake-time IsInstalled check would then miss CLA in the plugin registry,
@@ -33,23 +34,23 @@ namespace Manimal.LoadAmmoAnim
             LogSource = Logger;
             LogSource.LogInfo("LoadAmmoAnim loaded!");
 
-            // Class1204 hooks — detect mag-loading sessions + extend the first-bullet
+            // LoadMagazineProcess hooks — detect mag-loading sessions + extend the first-bullet
             // delay to fit the bundle's draw clip. driver-side, unrelated to controller dispatch.
             new LoadAmmoAnimDetectPatch().Enable();
-            new Class1204DrawDelayPatch().Enable();
+            new LoadMagazineDrawDelayPatch().Enable();
             new RaidStartBundleWarmPatch().Enable();
 
             // dispatch patches. route LoadAmmoBundleItem through LoadAmmoBundleController
             // instead of the engine's default usable-item handlers. mirror of HackerMod's
             // four-patch shim for custom items.
             new SetInHandsBundlePatch().Enable();
-            new ClientUsableBundleSmethod11Patch().Enable();
+            new ClientUsableBundleCreateAsyncPatch().Enable();
             new HandsControllerAnimationTypeBundlePatch().Enable();
             new UsableBundleInterfaceDispatchPatch().Enable();
 
             // defensive PWA guards — there's still a brief window during controller
             // teardown/respawn where WeaponRootAnim can be null/destroyed before the
-            // new firearm controllers smethod_8 rebinds. these silence the NRE storm
+            // new firearm controllers Setup rebinds. these silence the NRE storm
             // for those frames.
             new ProcessEffectorsNullGuardPatch().Enable();
             new VisualPassNullGuardPatch().Enable();

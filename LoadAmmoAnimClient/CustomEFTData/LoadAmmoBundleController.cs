@@ -5,7 +5,7 @@ using UnityEngine;
 namespace Manimal.LoadAmmoAnim.CustomEFTData
 {
     // hands controller for the mag-loading bundle. binds the animator inside
-    // vmethod_0 when the engine attaches us to the spawned WeaponPrefab.
+    // InitializeController when the engine attaches us to the spawned WeaponPrefab.
     public class LoadAmmoBundleController : Player.UsableItemController
     {
         // layer 1 is the firearms-anim convention used everywhere FirearmsAnimator's
@@ -18,11 +18,11 @@ namespace Manimal.LoadAmmoAnim.CustomEFTData
 
         public Animator BundleAnimator { get; private set; }
 
-        public override void vmethod_0(Player player, WeaponPrefab weaponPrefab)
+        public override void InitializeController(Player player, WeaponPrefab weaponPrefab)
         {
             try
             {
-                base.vmethod_0(player, weaponPrefab);
+                base.InitializeController(player, weaponPrefab);
 
                 if (weaponPrefab == null) return;
                 BundleAnimator = weaponPrefab.GetComponentInChildren<Animator>();
@@ -39,7 +39,7 @@ namespace Manimal.LoadAmmoAnim.CustomEFTData
             catch (Exception ex)
             {
                 Plugin.LogSource?.LogError(
-                    $"[LoadAmmoAnim] LoadAmmoBundleController.vmethod_0 threw: {ex.GetType().Name}: {ex.Message}");
+                    $"[LoadAmmoAnim] LoadAmmoBundleController.InitializeController threw: {ex.GetType().Name}: {ex.Message}");
             }
         }
 
