@@ -6,7 +6,7 @@ SPT 5.0 (Single Player Tushonka) runs EFT 1.1 under **IL2CPP** with **BepInEx 6*
 
 - Built against `SPTushonka.*` **5.0.0-pre.202610101655** (`SptPackageVersion` in `Directory.Build.props`). Bump it once 5.0 ships. It **compiles cleanly** against those packages.
 - **WTT-ServerCommonLib dependency removed.** WTT has no SPT 5.0 build. The animation item is now created through the server's own `CustomItemService.CreateItemFromClone`, and its properties (weight, quest item, `UsePrefab` = `manimal/stanags_container.bundle`, ...) are set on the clone directly.
-- The item is now a plain **PortableRangeFinder clone under the rangefinder's own parent**. The custom parent node (`8a3f72c1b9d5e60a4fe83b21`) and the `ServerModFiles/db` jsonc files are gone. The item template ID is unchanged (`69d69c70ed183ba9c882f7f7`).
+- The item is now a plain **PortableRangeFinder clone under the rangefinder node**, which the server mod finds by name (`PortableRangeFinder`) at startup. The 4.x jsonc cloned `5b80242286f77429445e0b47`, which is not a rangefinder. That only worked because the custom parent decided the client class; without the custom parent the client built a `Handguard`. The custom parent node (`8a3f72c1b9d5e60a4fe83b21`) and the `ServerModFiles/db` jsonc files are gone. The item template ID is unchanged (`69d69c70ed183ba9c882f7f7`).
 
 ## Client (`LoadAmmoAnimClient`)
 

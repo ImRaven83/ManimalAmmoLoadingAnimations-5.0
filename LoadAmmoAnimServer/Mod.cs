@@ -28,7 +28,7 @@ public record ModMetadata : IModMetadata
 // animation. used to go through WTT-ServerCommonLib, which has no SPT 5.0 build, so this
 // talks to the server's own CustomItemService instead.
 //
-// the item is a straight clone of PortableRangeFinder under the rangefinder's own parent. the
+// the item is a straight clone of a PortableRangeFinder under the rangefinder node. the
 // IL2CPP client cant spawn a custom Item subclass, so the client identifies it by template id
 // instead of a custom parent + class.
 [Injectable(TypePriority = OnLoadOrder.Preload + 2)]
@@ -40,24 +40,33 @@ public class LoadAmmoAnimServer(
     // must match LoadAmmoAnimDriver.BundleItemTplId on the client.
     private static readonly MongoId BundleItemTplId = new("69d69c70ed183ba9c882f7f7");
 
-    // vanilla PortableRangeFinder (Vortex Ranger 1500).
-    private static readonly MongoId RangeFinderTplId = new("5b80242286f77429445e0b47");
+    // the item has to be a PortableRangeFinder on the client: that class carries UsePrefab and goes
+    // through the usable-item hands controller. the 4.x jsonc cloned 5b80242286f77429445e0b47, which
+    // is not a rangefinder, and only worked because the custom parent set the client class. so look
+    // up the rangefinder node by name and clone a real rangefinder under it.
+    private const string RangeFinderNodeName = "PortableRangeFinder";
 
     private const string HandbookParentId = "5b47574386f77428ca22b338";
     private const string BundlePath = "manimal/stanags_container.bundle";
 
     public Task OnLoadAsync(CancellationToken cancellationToken)
     {
-        if (!templateTable.Items.TryGetValue(RangeFinderTplId, out var rangeFinder))
+        var rangeFinderNode = templateTable.Items.Values.FirstOrDefault(t =>
+            t.Type == "Node" && t.Name == RangeFinderNodeName);
+        var rangeFinder = rangeFinderNode is null
+            ? null
+            : templateTable.Items.Values.FirstOrDefault(t => t.Type == "Item" && t.Parent == rangeFinderNode.Id);
+
+        if (rangeFinderNode is null || rangeFinder is null)
         {
-            logger.Error($"[LoadAmmoAnim] rangefinder template {RangeFinderTplId} is missing, cant create the animation item.");
+            logger.Error($"[LoadAmmoAnim] no {RangeFinderNodeName} template found to clone, cant create the animation item.");
             return Task.CompletedTask;
         }
 
         var result = customItemService.CreateItemFromClone(new NewItemFromCloneDetails
         {
-            ItemTplToClone = RangeFinderTplId,
-            ParentId = rangeFinder.Parent,
+            ItemTplToClone = rangeFinder.Id,
+            ParentId = rangeFinderNode.Id,
             NewId = BundleItemTplId,
             NewItemName = "LoadAmmoBundleItem",
             HandbookParentId = HandbookParentId,
@@ -96,6 +105,7 @@ public class LoadAmmoAnimServer(
             properties.UsePrefab = new Prefab { Path = BundlePath, Rcid = "" };
         }
 
+        logger.Info($"[LoadAmmoAnim] animation item {BundleItemTplId} created from {rangeFinder.Name} ({rangeFinder.Id}).");
         return Task.CompletedTask;
     }
 }
