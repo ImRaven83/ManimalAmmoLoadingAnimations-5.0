@@ -3,15 +3,17 @@ using EFT.InventoryLogic;
 using EFT.NextObservedPlayer;
 using HarmonyLib;
 using Manimal.LoadAmmoAnim.CustomEFTData;
-using SPT.Reflection.Patching;
+using SPTushonka.Reflection.Patching;
 
 namespace Manimal.LoadAmmoAnim.Patches
 {
     // patches ObservedPlayerUsableItemController.GetObservedUsableItem, the dispatcher
     // that returns the IObservedUsableItem implementation for a given item type during
     // the controller swap chain. vanilla returns specific classes for radio transmitter
-    // and rangefinder, otherwise null — and since we inherit PortableRangeFinder it would
-    // hand us the rangefinder one. swap in a no-op stub instead.
+    // and rangefinder, otherwise null — and since our item is a PortableRangeFinder clone
+    // it would hand us the rangefinder one, which expects rangefinder parts our bundle
+    // doesnt have. return null like vanilla does for every other usable item. (4.x
+    // returned a managed no-op stub, IL2CPP would need it injected as an interface impl.)
     internal sealed class UsableBundleInterfaceDispatchPatch : ModulePatch
     {
         protected override MethodBase GetTargetMethod() =>
@@ -22,9 +24,9 @@ namespace Manimal.LoadAmmoAnim.Patches
         [PatchPrefix]
         private static bool Prefix(ref IObservedUsableItem __result, Item item)
         {
-            if (item is LoadAmmoBundleItem)
+            if (LoadAmmoBundle.IsBundleItem(item))
             {
-                __result = new LoadAmmoBundleInterfaceClass();
+                __result = null;
                 return false;
             }
             return true;

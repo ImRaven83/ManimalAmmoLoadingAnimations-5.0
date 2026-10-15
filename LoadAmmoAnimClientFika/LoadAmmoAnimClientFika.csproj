@@ -1,7 +1,8 @@
 <Project Sdk="Microsoft.NET.Sdk">
 
   <PropertyGroup>
-    <TargetFramework>netstandard2.1</TargetFramework>
+    <TargetFramework>net10.0</TargetFramework>
+    <AppendTargetFrameworkToOutputPath>false</AppendTargetFrameworkToOutputPath>
     <RootNamespace>Manimal.LoadAmmoAnim.Fika</RootNamespace>
     <AssemblyName>LoadAmmoAnimClientFika</AssemblyName>
     <Nullable>disable</Nullable>
@@ -35,51 +36,59 @@
       <HintPath>$(FikaSptRoot)\BepInEx\core\0Harmony.dll</HintPath>
       <Private>false</Private>
     </Reference>
-    <Reference Include="spt-common">
-      <HintPath>$(FikaSptRoot)\BepInEx\plugins\spt\spt-common.dll</HintPath>
+    <Reference Include="BepInEx.Core">
+      <HintPath>$(FikaSptRoot)\BepInEx\core\BepInEx.Core.dll</HintPath>
       <Private>false</Private>
     </Reference>
-    <Reference Include="spt-reflection">
-      <HintPath>$(FikaSptRoot)\BepInEx\plugins\spt\spt-reflection.dll</HintPath>
+    <Reference Include="BepInEx.Unity.IL2CPP">
+      <HintPath>$(FikaSptRoot)\BepInEx\core\BepInEx.Unity.IL2CPP.dll</HintPath>
+      <Private>false</Private>
+    </Reference>
+    <Reference Include="Il2CppInterop.Runtime">
+      <HintPath>$(FikaSptRoot)\BepInEx\core\Il2CppInterop.Runtime.dll</HintPath>
+      <Private>false</Private>
+    </Reference>
+    <Reference Include="SPTushonka.Reflection">
+      <HintPath>$(FikaSptRoot)\BepInEx\plugins\sptushonka\SPTushonka.Reflection.dll</HintPath>
+      <Private>false</Private>
+    </Reference>
+    <Reference Include="Il2Cppmscorlib">
+      <HintPath>$(FikaSptRoot)\BepInEx\interop\Il2Cppmscorlib.dll</HintPath>
       <Private>false</Private>
     </Reference>
     <Reference Include="Assembly-CSharp">
-      <HintPath>$(FikaSptRoot)\EscapeFromTarkov_Data\Managed\Assembly-CSharp.dll</HintPath>
-      <Private>false</Private>
-    </Reference>
-    <Reference Include="BepInEx">
-      <HintPath>$(FikaSptRoot)\BepInEx\core\BepInEx.dll</HintPath>
+      <HintPath>$(FikaSptRoot)\BepInEx\interop\Assembly-CSharp.dll</HintPath>
       <Private>false</Private>
     </Reference>
     <Reference Include="Comfort">
-      <HintPath>$(FikaSptRoot)\EscapeFromTarkov_Data\Managed\Comfort.dll</HintPath>
+      <HintPath>$(FikaSptRoot)\BepInEx\interop\Comfort.dll</HintPath>
       <Private>false</Private>
     </Reference>
     <Reference Include="Comfort.Unity">
-      <HintPath>$(FikaSptRoot)\EscapeFromTarkov_Data\Managed\Comfort.Unity.dll</HintPath>
+      <HintPath>$(FikaSptRoot)\BepInEx\interop\Comfort.Unity.dll</HintPath>
       <Private>false</Private>
     </Reference>
     <Reference Include="UnityEngine">
-      <HintPath>$(FikaSptRoot)\EscapeFromTarkov_Data\Managed\UnityEngine.dll</HintPath>
+      <HintPath>$(FikaSptRoot)\BepInEx\interop\UnityEngine.dll</HintPath>
       <Private>false</Private>
     </Reference>
     <Reference Include="UnityEngine.CoreModule">
-      <HintPath>$(FikaSptRoot)\EscapeFromTarkov_Data\Managed\UnityEngine.CoreModule.dll</HintPath>
+      <HintPath>$(FikaSptRoot)\BepInEx\interop\UnityEngine.CoreModule.dll</HintPath>
       <Private>false</Private>
     </Reference>
     <Reference Include="ItemComponent.Types">
-      <HintPath>$(FikaSptRoot)\EscapeFromTarkov_Data\Managed\ItemComponent.Types.dll</HintPath>
+      <HintPath>$(FikaSptRoot)\BepInEx\interop\ItemComponent.Types.dll</HintPath>
       <Private>false</Private>
     </Reference>
     <Reference Include="ItemTemplate.Types">
-      <HintPath>$(FikaSptRoot)\EscapeFromTarkov_Data\Managed\ItemTemplate.Types.dll</HintPath>
+      <HintPath>$(FikaSptRoot)\BepInEx\interop\ItemTemplate.Types.dll</HintPath>
       <Private>false</Private>
     </Reference>
   </ItemGroup>
 
   <!--
     Drop the built DLL alongside the main client DLL in the BepInEx plugins
-    folder. main client's side-loader picks it up at Awake when Fika is detected.
+    folder. main client's side-loader picks it up at Load when Fika is detected.
   -->
   <Target Name="PostBuild" AfterTargets="PostBuildEvent">
     <MakeDir Directories="$(FikaSptRoot)\BepInEx\plugins\LoadAmmoAnim" />

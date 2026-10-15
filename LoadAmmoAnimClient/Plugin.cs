@@ -1,27 +1,29 @@
 using BepInEx;
-using BepInEx.Bootstrap;
+using BepInEx.Configuration;
 using BepInEx.Logging;
+using BepInEx.Unity.IL2CPP;
 using Manimal.LoadAmmoAnim.Patches;
 using System;
 using System.IO;
 using System.Reflection;
 
 // the Fika compat assembly is a separate DLL that hard-refs Fika.Core. it lives
-// next to this one and gets sideloaded at Awake if Fika is installed. give it
+// next to this one and gets sideloaded at Load if Fika is installed. give it
 // access to our internals so it can drive the per-player session state directly.
 [assembly: System.Runtime.CompilerServices.InternalsVisibleTo("LoadAmmoAnimClientFika")]
 
 namespace Manimal.LoadAmmoAnim
 {
     [BepInPlugin(BuildInfo.ModGuid, "Manimal-LoadAmmoAnim", BuildInfo.Version)]
-    [BepInDependency("com.wtt.commonlib", "3.0.6")]
+    // SPTushonka core installs the main-thread dispatcher our async continuations resume on.
+    [BepInDependency("com.sptushonka.core")]
     // soft-dep on CLA so we load AFTER it. our plugin's GUID sorts alphabetically
     // before CLA's, which means without this hint BepInEx loads us first — and our
-    // Awake-time IsInstalled check would then miss CLA in the plugin registry,
+    // Load-time IsInstalled check would then miss CLA in the plugin registry,
     // skipping the compat patches and breaking chained-mag loading.
     [BepInDependency("com.ozen.continuousloadammo", BepInDependency.DependencyFlags.SoftDependency)]
     [BepInDependency("com.fika.core", BepInDependency.DependencyFlags.SoftDependency)]
-    public class Plugin : BaseUnityPlugin
+    public class Plugin : BasePlugin
     {
         private const string FikaGuid = "com.fika.core";
         private const string FikaCompatAssemblyFileName = "LoadAmmoAnimClientFika.dll";
@@ -29,9 +31,23 @@ namespace Manimal.LoadAmmoAnim
 
         public static ManualLogSource LogSource;
 
-        private void Awake()
+        // multiplier on the bundle animation's playback speed. 1 = matches the game's per-round
+        // load time, lower = slower. loading itself is not changed.
+        public static ConfigEntry<float> AnimationSpeed;
+
+        public override void Load()
         {
-            LogSource = Logger;
+            LogSource = Log;
+
+            AnimationSpeed = Config.Bind(
+                "General",
+                "Animation Speed",
+                1f,
+                new ConfigDescription(
+                    "Playback speed of the mag loading animation, relative to how fast rounds actually load. " +
+                    "Lower is slower (0.8 = 20% slower). Loading speed itself is unchanged, so below 1 the " +
+                    "animation runs a little behind the rounds going in.",
+                    new AcceptableValueRange<float>(0.5f, 1.5f)));
             LogSource.LogInfo("LoadAmmoAnim loaded!");
 
             // LoadMagazineProcess hooks — detect mag-loading sessions + extend the first-bullet
@@ -40,13 +56,14 @@ namespace Manimal.LoadAmmoAnim
             new LoadMagazineDrawDelayPatch().Enable();
             new RaidStartBundleWarmPatch().Enable();
 
-            // dispatch patches. route LoadAmmoBundleItem through LoadAmmoBundleController
-            // instead of the engine's default usable-item handlers. mirror of HackerMod's
-            // four-patch shim for custom items.
+            // dispatch patches. route the bundle item (by template id) through a plain
+            // UsableItemController instead of the engine's rangefinder handling, and bind
+            // the bundle's animator when that controller initializes.
             new SetInHandsBundlePatch().Enable();
             new ClientUsableBundleCreateAsyncPatch().Enable();
             new HandsControllerAnimationTypeBundlePatch().Enable();
             new UsableBundleInterfaceDispatchPatch().Enable();
+            new BundleControllerInitializePatch().Enable();
 
             // defensive PWA guards — there's still a brief window during controller
             // teardown/respawn where WeaponRootAnim can be null/destroyed before the
@@ -61,7 +78,7 @@ namespace Manimal.LoadAmmoAnim
             // sideload the Fika compat assembly only when Fika is installed. doing
             // it via reflection means the main DLL never resolves Fika.Core types,
             // so non-Fika setups load cleanly with no missing-dependency errors.
-            if (Chainloader.PluginInfos.ContainsKey(FikaGuid))
+            if (IL2CPPChainloader.Instance.Plugins.ContainsKey(FikaGuid))
                 LoadFikaCompat();
         }
 

@@ -11,7 +11,7 @@ using System;
 
 namespace Manimal.LoadAmmoAnim.Fika
 {
-    // sideloaded entry point. main plugin's Awake calls Enable() via reflection
+    // sideloaded entry point. main plugin's Load calls Enable() via reflection
     // when Fika is detected. registers packet handlers, subscribes to driver
     // events, and broadcasts/receives anim sessions across the Fika network.
     public static class FikaCompatModule
@@ -29,7 +29,7 @@ namespace Manimal.LoadAmmoAnim.Fika
             _netManager = Singleton<IFikaNetworkManager>.Instance;
             if (_netManager == null)
             {
-                // Fika initializes its network manager later than our Awake. defer
+                // Fika initializes its network manager later than our Load. defer
                 // registration to the first packet event we observe. for v1 we just
                 // bail and warn — the user can reload the mod after raid join if
                 // its actually missing.
@@ -75,9 +75,10 @@ namespace Manimal.LoadAmmoAnim.Fika
         {
             // only the local player should ever broadcast. observed players have
             // IsYourPlayer=false and exist on every machine, so re-broadcasting
-            // their state would feedback-loop.
-            if (p is FikaPlayer fp && fp.IsYourPlayer) return fp;
-            return null;
+            // their state would feedback-loop. TryCast, not `is` — IL2CPP wrappers dont
+            // carry the runtime type.
+            var fp = p?.TryCast<FikaPlayer>();
+            return fp != null && fp.IsYourPlayer ? fp : null;
         }
 
         private static void OnAnimStarted(Player player, string magTpl, float speed)
@@ -143,7 +144,8 @@ namespace Manimal.LoadAmmoAnim.Fika
                 for (int i = 0; i < list.Count; i++)
                 {
                     var p = list[i];
-                    if (p is FikaPlayer fp && fp.NetId == netId && !fp.IsYourPlayer)
+                    var fp = p?.TryCast<FikaPlayer>();
+                    if (fp != null && fp.NetId == netId && !fp.IsYourPlayer)
                         return p;
                 }
             }
@@ -155,7 +157,8 @@ namespace Manimal.LoadAmmoAnim.Fika
             {
                 foreach (var p in all)
                 {
-                    if (p is FikaPlayer fp && fp.NetId == netId && !fp.IsYourPlayer)
+                    var fp = p?.TryCast<FikaPlayer>();
+                    if (fp != null && fp.NetId == netId && !fp.IsYourPlayer)
                         return p;
                 }
             }

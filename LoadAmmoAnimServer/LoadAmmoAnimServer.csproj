@@ -11,22 +11,21 @@
     <Authors>Manimal</Authors>
     <Company>Manimal</Company>
     <Product>LoadAmmoAnim</Product>
-    <Description>Server-side mod that registers the hidden animation IFAK item for LoadAmmoAnim</Description>
+    <Description>Server-side mod that registers the hidden animation item for LoadAmmoAnim</Description>
     <PackageLicenseExpression>MIT</PackageLicenseExpression>
   </PropertyGroup>
 
   <ItemGroup>
-    <PackageReference Include="SPTushonka.Common" Version="4.1.5" />
-    <PackageReference Include="SPTushonka.DI" Version="4.1.5" />
-    <PackageReference Include="SPTushonka.Server.Core" Version="4.1.5" />
-    <PackageReference Include="WTT-ServerCommonLib" Version="3.0.6" />
+    <PackageReference Include="SPTushonka.Common" Version="$(SptPackageVersion)" />
+    <PackageReference Include="SPTushonka.DI" Version="$(SptPackageVersion)" />
+    <PackageReference Include="SPTushonka.Server.Core" Version="$(SptPackageVersion)" />
   </ItemGroup>
 
   <!--
     Force the client to build before the server, so the unified release-zip target
     below can find the client DLL output. ReferenceOutputAssembly=false because we
     dont actually link against the client at runtime — its a different runtime
-    (netstandard2.1 client vs net10.0 server) and a different process (BepInEx vs SPT).
+    (IL2CPP interop client vs SPT server) and a different process (BepInEx vs SPT).
     Were just leveraging MSBuild's project graph for build ordering.
   -->
   <ItemGroup>
@@ -72,7 +71,7 @@
     </PropertyGroup>
     <MakeDir Directories="$(DeployDir)" />
     <Copy SourceFiles="$(TargetPath)" DestinationFolder="$(DeployDir)" />
-    <!-- Copy static mod files (bundles.json, db/) preserving directory structure -->
+    <!-- Copy static mod files (bundles.json, bundles/) preserving directory structure -->
     <ItemGroup>
       <StaticModFiles Include="$(ProjectDir)..\ServerModFiles\**\*" />
     </ItemGroup>
@@ -114,8 +113,8 @@
     <PropertyGroup>
       <ReleaseStagingDir>$(ProjectDir)..\obj\ReleasePackage</ReleaseStagingDir>
       <ReleaseZipPath>$(ProjectDir)..\LoadAmmoAnim-$(Version).zip</ReleaseZipPath>
-      <ClientDllPath>$(ProjectDir)..\LoadAmmoAnimClient\bin\$(Configuration)\netstandard2.1\LoadAmmoAnimClient.dll</ClientDllPath>
-      <FikaClientDllPath>$(ProjectDir)..\LoadAmmoAnimClientFika\bin\$(Configuration)\netstandard2.1\LoadAmmoAnimClientFika.dll</FikaClientDllPath>
+      <ClientDllPath>$(ProjectDir)..\LoadAmmoAnimClient\bin\$(Configuration)\LoadAmmoAnimClient.dll</ClientDllPath>
+      <FikaClientDllPath>$(ProjectDir)..\LoadAmmoAnimClientFika\bin\$(Configuration)\LoadAmmoAnimClientFika.dll</FikaClientDllPath>
       <DeployedBundlePath>$(SptServerDir)\user\mods\LoadAmmoAnimServer\bundles\manimal\stanags_container.bundle</DeployedBundlePath>
     </PropertyGroup>
 
@@ -132,12 +131,12 @@
     <Warning Text="Client DLL missing at $(ClientDllPath) — release zip will not include the client" Condition="!Exists('$(ClientDllPath)')" />
     <Copy SourceFiles="$(ClientDllPath)" DestinationFolder="$(ReleaseStagingDir)\BepInEx\plugins\LoadAmmoAnim" Condition="Exists('$(ClientDllPath)')" />
 
-    <!-- Fika compat DLL — sideloaded by the main client at Awake when Fika is detected.
-         shipping it unconditionally is fine since the loader gates on Chainloader.PluginInfos. -->
+    <!-- Fika compat DLL — sideloaded by the main client at Load when Fika is detected.
+         shipping it unconditionally is fine since the loader gates on IL2CPPChainloader.Instance.Plugins. -->
     <Warning Text="Fika compat DLL missing at $(FikaClientDllPath) — release zip will not include Fika compat. Build LoadAmmoAnimClientFika to populate." Condition="!Exists('$(FikaClientDllPath)')" />
     <Copy SourceFiles="$(FikaClientDllPath)" DestinationFolder="$(ReleaseStagingDir)\BepInEx\plugins\LoadAmmoAnim" Condition="Exists('$(FikaClientDllPath)')" />
 
-    <!-- ServerModFiles (bundles.json, db/*.jsonc) -->
+    <!-- ServerModFiles (bundles.json, bundles/) -->
     <ItemGroup>
       <ReleaseStaticFiles Include="$(ProjectDir)..\ServerModFiles\**\*" />
     </ItemGroup>

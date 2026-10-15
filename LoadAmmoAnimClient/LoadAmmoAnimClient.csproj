@@ -1,7 +1,7 @@
 <Project Sdk="Microsoft.NET.Sdk">
 
   <PropertyGroup>
-    <TargetFramework>netstandard2.1</TargetFramework>
+    <TargetFramework>net10.0</TargetFramework>
     <RootNamespace>Manimal.LoadAmmoAnim</RootNamespace>
     <AssemblyName>LoadAmmoAnimClient</AssemblyName>
     <Nullable>disable</Nullable>
@@ -13,61 +13,95 @@
     <LangVersion>latest</LangVersion>
     <FileAlignment>512</FileAlignment>
     <Deterministic>true</Deterministic>
+    <AppendTargetFrameworkToOutputPath>false</AppendTargetFrameworkToOutputPath>
+    <BepInExCore>$(SptRoot)\BepInEx\core</BepInExCore>
+    <Interop>$(SptRoot)\BepInEx\interop</Interop>
   </PropertyGroup>
 
   <ItemGroup>
-    <PackageReference Include="WTT-ClientCommonLib" Version="3.0.6" />
-  </ItemGroup>
-
-  <ItemGroup>
     <Reference Include="0Harmony">
-      <HintPath>$(SptRoot)\BepInEx\core\0Harmony.dll</HintPath>
+      <HintPath>$(BepInExCore)\0Harmony.dll</HintPath>
+      <Private>false</Private>
     </Reference>
-    <Reference Include="spt-common">
-      <HintPath>$(SptRoot)\BepInEx\plugins\spt\spt-common.dll</HintPath>
+    <Reference Include="BepInEx.Core">
+      <HintPath>$(BepInExCore)\BepInEx.Core.dll</HintPath>
+      <Private>false</Private>
     </Reference>
-    <Reference Include="spt-reflection">
-      <HintPath>$(SptRoot)\BepInEx\plugins\spt\spt-reflection.dll</HintPath>
+    <Reference Include="BepInEx.Unity.IL2CPP">
+      <HintPath>$(BepInExCore)\BepInEx.Unity.IL2CPP.dll</HintPath>
+      <Private>false</Private>
+    </Reference>
+    <Reference Include="Il2CppInterop.Runtime">
+      <HintPath>$(BepInExCore)\Il2CppInterop.Runtime.dll</HintPath>
+      <Private>false</Private>
+    </Reference>
+    <Reference Include="SPTushonka.Reflection">
+      <HintPath>$(SptRoot)\BepInEx\plugins\sptushonka\SPTushonka.Reflection.dll</HintPath>
+      <Private>false</Private>
+    </Reference>
+    <Reference Include="Il2Cppmscorlib">
+      <HintPath>$(Interop)\Il2Cppmscorlib.dll</HintPath>
+      <Private>false</Private>
+    </Reference>
+    <Reference Include="Il2CppSystem">
+      <HintPath>$(Interop)\Il2CppSystem.dll</HintPath>
+      <Private>false</Private>
     </Reference>
     <Reference Include="Assembly-CSharp">
-      <HintPath>$(SptRoot)\EscapeFromTarkov_Data\Managed\Assembly-CSharp.dll</HintPath>
+      <HintPath>$(Interop)\Assembly-CSharp.dll</HintPath>
+      <Private>false</Private>
     </Reference>
-    <Reference Include="BepInEx">
-      <HintPath>$(SptRoot)\BepInEx\core\BepInEx.dll</HintPath>
+    <Reference Include="DependencyManager">
+      <HintPath>$(Interop)\DependencyManager.dll</HintPath>
+      <Private>false</Private>
+    </Reference>
+    <Reference Include="Diz.Jobs">
+      <HintPath>$(Interop)\Diz.Jobs.dll</HintPath>
+      <Private>false</Private>
+    </Reference>
+    <Reference Include="Diz.Resources">
+      <HintPath>$(Interop)\Diz.Resources.dll</HintPath>
+      <Private>false</Private>
     </Reference>
     <Reference Include="Comfort">
-      <HintPath>$(SptRoot)\EscapeFromTarkov_Data\Managed\Comfort.dll</HintPath>
+      <HintPath>$(Interop)\Comfort.dll</HintPath>
+      <Private>false</Private>
     </Reference>
-    <Reference Include="Comfort.Unity, Version=1.0.0.4, Culture=neutral, processorArchitecture=MSIL">
-      <SpecificVersion>False</SpecificVersion>
-      <HintPath>$(SptRoot)\EscapeFromTarkov_Data\Managed\Comfort.Unity.dll</HintPath>
+    <Reference Include="Comfort.Unity">
+      <HintPath>$(Interop)\Comfort.Unity.dll</HintPath>
+      <Private>false</Private>
     </Reference>
     <Reference Include="UnityEngine">
-      <HintPath>$(SptRoot)\EscapeFromTarkov_Data\Managed\UnityEngine.dll</HintPath>
+      <HintPath>$(Interop)\UnityEngine.dll</HintPath>
+      <Private>false</Private>
     </Reference>
-    <Reference Include="UnityEngine.AnimationModule, Version=0.0.0.0, Culture=neutral, processorArchitecture=MSIL">
-      <SpecificVersion>False</SpecificVersion>
-      <HintPath>$(SptRoot)\EscapeFromTarkov_Data\Managed\UnityEngine.AnimationModule.dll</HintPath>
+    <Reference Include="UnityEngine.AnimationModule">
+      <HintPath>$(Interop)\UnityEngine.AnimationModule.dll</HintPath>
+      <Private>false</Private>
     </Reference>
     <Reference Include="AnimationSystem.Types">
-      <HintPath>$(SptRoot)\EscapeFromTarkov_Data\Managed\AnimationSystem.Types.dll</HintPath>
+      <HintPath>$(Interop)\AnimationSystem.Types.dll</HintPath>
+      <Private>false</Private>
     </Reference>
     <Reference Include="ItemComponent.Types">
-      <HintPath>$(SptRoot)\EscapeFromTarkov_Data\Managed\ItemComponent.Types.dll</HintPath>
+      <HintPath>$(Interop)\ItemComponent.Types.dll</HintPath>
+      <Private>false</Private>
     </Reference>
     <Reference Include="ItemTemplate.Types">
-      <HintPath>$(SptRoot)\EscapeFromTarkov_Data\Managed\ItemTemplate.Types.dll</HintPath>
+      <HintPath>$(Interop)\ItemTemplate.Types.dll</HintPath>
+      <Private>false</Private>
     </Reference>
-    <Reference Include="UnityEngine.AssetBundleModule, Version=0.0.0.0, Culture=neutral, processorArchitecture=MSIL">
-      <SpecificVersion>False</SpecificVersion>
-      <HintPath>$(SptRoot)\EscapeFromTarkov_Data\Managed\UnityEngine.AssetBundleModule.dll</HintPath>
+    <Reference Include="UnityEngine.AssetBundleModule">
+      <HintPath>$(Interop)\UnityEngine.AssetBundleModule.dll</HintPath>
+      <Private>false</Private>
     </Reference>
     <Reference Include="UnityEngine.CoreModule">
-      <HintPath>$(SptRoot)\EscapeFromTarkov_Data\Managed\UnityEngine.CoreModule.dll</HintPath>
+      <HintPath>$(Interop)\UnityEngine.CoreModule.dll</HintPath>
+      <Private>false</Private>
     </Reference>
     <Reference Include="DissonanceVoip">
-      <SpecificVersion>False</SpecificVersion>
-      <HintPath>$(SptRoot)\EscapeFromTarkov_Data\Managed\DissonanceVoip.dll</HintPath>
+      <HintPath>$(Interop)\DissonanceVoip.dll</HintPath>
+      <Private>false</Private>
     </Reference>
   </ItemGroup>
 
@@ -89,7 +123,6 @@
       <_BuildInfoLines Include="    {" />
       <_BuildInfoLines Include="        public const string Version = %22$(ModVersion)%22%3B" />
       <_BuildInfoLines Include="        public const string ModGuid = %22$(ModGuid)%22%3B" />
-      <_BuildInfoLines Include="        public const string BundleItemParentId = %22$(ModBundleItemParentId)%22%3B" />
       <_BuildInfoLines Include="    }" />
       <_BuildInfoLines Include="}" />
     </ItemGroup>

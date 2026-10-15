@@ -4,13 +4,13 @@ using EFT;
 using EFT.InventoryLogic;
 using HarmonyLib;
 using Manimal.LoadAmmoAnim.CustomEFTData;
-using SPT.Reflection.Patching;
+using SPTushonka.Reflection.Patching;
 
 namespace Manimal.LoadAmmoAnim.Patches
 {
-    // routes our item through LoadAmmoBundleController when something calls
-    // Player.SetInHandsUsableItem on it. vanilla only recognises specific
-    // built-in types and silently no-ops for ours.
+    // routes our item through a plain UsableItemController when something calls
+    // Player.SetInHandsUsableItem on it. vanilla would treat it as a rangefinder.
+    // BundleControllerInitializePatch then binds the bundle's animator.
     internal sealed class SetInHandsBundlePatch : ModulePatch
     {
         protected override MethodBase GetTargetMethod() =>
@@ -21,9 +21,9 @@ namespace Manimal.LoadAmmoAnim.Patches
         [PatchPrefix]
         private static bool Prefix(Player __instance, Item item, Callback<IUsableItemController> callback)
         {
-            if (item is LoadAmmoBundleItem)
+            if (LoadAmmoBundle.IsBundleItem(item))
             {
-                __instance.Proceed<LoadAmmoBundleController>(item, callback, true);
+                __instance.Proceed<Player.UsableItemController>(item, callback, true);
                 return false;
             }
             return true;

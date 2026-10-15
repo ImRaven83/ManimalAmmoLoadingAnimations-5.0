@@ -5,20 +5,24 @@
     csproj Version, release zip filename) refreshes on next build.
   -->
   <PropertyGroup>
-    <ModVersion>2.0.0</ModVersion>
-    <ModSptVersion>~4.1.5</ModSptVersion>
+    <ModVersion>3.0.0</ModVersion>
+    <ModSptVersion>~5.0.0</ModSptVersion>
     <ModGuid>com.manimal.loadammoanim</ModGuid>
-    <!-- custom item parent id. matches [CustomParent] on LoadAmmoBundleItem and the
-         "parentId" field in hidden_anim_STANAGS.jsonc. random 24-hex, distinct from
-         every other mod's parent id so theres no collision. -->
-    <ModBundleItemParentId>8a3f72c1b9d5e60a4fe83b21</ModBundleItemParentId>
   </PropertyGroup>
 
-  <!-- SptRoot = main 4.1 dev install (references + deploy). FikaSptRoot = the Fika
+  <!-- SptRoot = main 5.0 dev install (references + deploy). FikaSptRoot = the Fika
        dev install, only the Fika compat project needs it for Fika.Core.dll. -->
   <PropertyGroup>
-    <SptRoot Condition="'$(SptRoot)' == ''">D:\SPT41Dev</SptRoot>
-    <FikaSptRoot Condition="'$(FikaSptRoot)' == ''">D:\SPT41DevFika</FikaSptRoot>
+    <SptRoot Condition="'$(SptRoot)' == ''">D:\SPT50Dev</SptRoot>
+    <FikaSptRoot Condition="'$(FikaSptRoot)' == ''">D:\SPT50DevFika</FikaSptRoot>
     <SptServerDir>$(SptRoot)\SPT_Runtime</SptServerDir>
+  </PropertyGroup>
+
+  <!-- SPT 5.0 runs EFT 1.1 under IL2CPP with BepInEx 6. client game types come from the
+       interop assemblies BepInEx generates in BepInEx\interop on first launch, so launch
+       the game once before building the client projects. -->
+  <PropertyGroup>
+    <!-- SPTushonka server packages. 5.0 is still in prerelease, bump this once it ships. -->
+    <SptPackageVersion>5.0.0-pre.202610101655</SptPackageVersion>
   </PropertyGroup>
 </Project>

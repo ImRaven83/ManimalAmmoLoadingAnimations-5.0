@@ -3,7 +3,7 @@ using EFT;
 using EFT.NextObservedPlayer;
 using HarmonyLib;
 using Manimal.LoadAmmoAnim.CustomEFTData;
-using SPT.Reflection.Patching;
+using SPTushonka.Reflection.Patching;
 
 namespace Manimal.LoadAmmoAnim.Patches
 {
@@ -23,7 +23,7 @@ namespace Manimal.LoadAmmoAnim.Patches
             ref PlayerAnimator.EWeaponAnimationType __result,
             ObservedPlayerHandsController __instance)
         {
-            if (__instance.ItemInHands is LoadAmmoBundleItem)
+            if (LoadAmmoBundle.IsBundleItem(__instance.ItemInHands))
             {
                 __result = PlayerAnimator.EWeaponAnimationType.Pistol;
                 return false;
