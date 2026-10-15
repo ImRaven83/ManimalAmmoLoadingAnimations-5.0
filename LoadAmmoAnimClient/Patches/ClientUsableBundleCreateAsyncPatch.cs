@@ -1,16 +1,16 @@
 using System.Reflection;
-using System.Threading.Tasks;
 using EFT;
+using EFT.InventoryLogic;
 using HarmonyLib;
 using Manimal.LoadAmmoAnim.CustomEFTData;
-using SPT.Reflection.Patching;
+using SPTushonka.Reflection.Patching;
 
 namespace Manimal.LoadAmmoAnim.Patches
 {
     // patches ClientUsableItemController.CreateAsync, the static async factory the
     // engine uses when building a controller from an item id during a hand swap.
-    // vanilla only looks up PortableRangeFinder; we route our type through
-    // CreateControllerAsync explicitly so the controller always gets our Item.
+    // our item is a PortableRangeFinder clone; we route it through CreateControllerAsync
+    // explicitly so the controller always gets our Item.
     internal sealed class ClientUsableBundleCreateAsyncPatch : ModulePatch
     {
         protected override MethodBase GetTargetMethod() =>
@@ -20,14 +20,14 @@ namespace Manimal.LoadAmmoAnim.Patches
 
         [PatchPrefix]
         private static bool Prefix(
-            ref Task<ClientUsableItemController> __result,
+            ref Il2CppSystem.Threading.Tasks.Task<ClientUsableItemController> __result,
             ClientPlayer player,
             string itemId)
         {
             if (string.IsNullOrEmpty(itemId)) return true;
 
-            var item = player.InventoryController.FindItem<LoadAmmoBundleItem>(itemId);
-            if (item != null)
+            var item = player.InventoryController.FindItem<PortableRangeFinder>(itemId);
+            if (LoadAmmoBundle.IsBundleItem(item))
             {
                 __result = Player.UsableItemController.CreateControllerAsync<ClientUsableItemController>(player, item);
                 return false;

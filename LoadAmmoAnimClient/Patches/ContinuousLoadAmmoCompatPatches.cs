@@ -1,8 +1,8 @@
-using BepInEx.Bootstrap;
+using BepInEx.Unity.IL2CPP;
 using Comfort.Common;
 using EFT;
 using HarmonyLib;
-using SPT.Reflection.Patching;
+using SPTushonka.Reflection.Patching;
 using System;
 using System.Linq;
 using System.Reflection;
@@ -12,14 +12,14 @@ namespace Manimal.LoadAmmoAnim.Patches
     // compat shim for ContinuousLoadAmmo (com.ozen.continuousloadammo).
     // CLA listens for OnHandsControllerChanged and cancels its loading session whenever
     // the hands controller swaps to anything other than empty hands. our Proceed swaps
-    // to LoadAmmoBundleController which trips that listeneri b these patches keep CLA
+    // to the bundle's UsableItemController which trips that listener. these patches keep CLA
     // from killing our session and prevent it from yanking our bundle mid-load.
     internal static class ContinuousLoadAmmoCompat
     {
         private const string ClaGuid = "com.ozen.continuousloadammo";
 
         public static bool IsInstalled =>
-            Chainloader.PluginInfos.ContainsKey(ClaGuid);
+            IL2CPPChainloader.Instance.Plugins.ContainsKey(ClaGuid);
 
         public static void EnablePatches()
         {
