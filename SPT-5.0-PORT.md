@@ -18,7 +18,7 @@ SPT 5.0 (Single Player Tushonka) runs EFT 1.1 under **IL2CPP** with **BepInEx 6*
 - IL2CPP idioms:
   - Sessions are keyed by native `Player.Pointer`, and magazine identity compares pointers.
   - Coroutines use BepInEx's managed `StartCoroutine` extension.
-  - Delegates passed to the game go through `DelegateSupport.ConvertDelegate`. The prefab factory delegate is bound to the native `ObjectsFactory.CreateItemUsablePrefab`.
+  - Delegates passed to the game go through `DelegateSupport.ConvertDelegate`. The prefab factory delegate wraps `ObjectsFactory.CreateItemUsablePrefab`.
   - Game `Task`s are bridged with `AsManaged()`, and `Il2CppSystem.Threading.Tasks.Task.Delay` replaces `__result` in the draw-delay patch.
 
 ## Fika compat (`LoadAmmoAnimClientFika`)
