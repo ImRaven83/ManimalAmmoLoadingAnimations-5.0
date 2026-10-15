@@ -128,6 +128,7 @@ namespace Manimal.LoadAmmoAnim.Patches
             var s = Get(player);
             // only start a new anim on the 0 to 1 edge. anything else is just an extra
             // session piling on top of one we are already animating for.
+            LoadAmmoAnimDriver.Trace($"loading started: count={s.LoadingCount} ourAnim={s.IsOurAnimation} mag={s.CurrentMagTemplateId} speed={s.LoadOneAmmoSpeed}");
             if (s.LoadingCount++ == 0 && !s.IsOurAnimation)
             {
                 s.DrawPhasePending = true;
@@ -174,6 +175,12 @@ namespace Manimal.LoadAmmoAnim.Patches
         // process-wide flag, the asset cache is shared across players.
         private static bool _bundleWarmed;
 
+        // step-by-step trace so a BepInEx log shows exactly where a session stops.
+        internal static void Trace(string message)
+        {
+            Plugin.LogSource?.LogInfo($"[LoadAmmoAnim] {message}");
+        }
+
         public static IEnumerator StartNextFrame(Player player)
         {
             // wait one frame so LoadMagazineProcess.Start can finish its synchronous setup.
@@ -182,7 +189,11 @@ namespace Manimal.LoadAmmoAnim.Patches
             if (player == null) yield break;
 
             var session = LoadAmmoAnimState.TryGet(player);
-            if (session == null || !session.IsLoading) yield break;
+            if (session == null || !session.IsLoading)
+            {
+                Trace($"start aborted: session={(session == null ? "null" : "ok")} loading={session?.IsLoading}");
+                yield break;
+            }
 
             var bundleItem = CreateBundleItem();
             if (bundleItem == null)
@@ -211,11 +222,28 @@ namespace Manimal.LoadAmmoAnim.Patches
                             while (!loadTask.IsCompleted) yield return null;
                         }
                         _bundleWarmed = true;
+                        Trace($"bundle retained inline: faulted={retainTask.IsFaulted} path={usePrefab.path}");
                     }
+                    else
+                    {
+                        Trace("bundle not retained: ObjectsFactory/EasyAssets missing");
+                    }
+                }
+                else
+                {
+                    Trace("bundle item has no UsePrefab, server item is missing its bundle path");
                 }
             }
 
-            TryStart(player, bundleItem);
+            try
+            {
+                TryStart(player, bundleItem);
+            }
+            catch (Exception ex)
+            {
+                Plugin.LogSource?.LogError($"[LoadAmmoAnim] TryStart threw: {ex}");
+                session.IsOurAnimation = false;
+            }
         }
 
         private static void TryStart(Player player, PortableRangeFinder bundleItem)
@@ -225,6 +253,8 @@ namespace Manimal.LoadAmmoAnim.Patches
 
             try { player.StopBlindFire(); } catch { }
             try { player.RemoveLeftHandItem(); } catch { }
+
+            Trace($"dropping current controller ({player.HandsController?.GetIl2CppType().Name ?? "none"})");
 
             // hand-stitched controller swap. Player.Proceed<T> uses ObjectsFactory.CreateItem
             // as its factory, which reads the item's Prefab field. our bundle is on UsePrefab,
@@ -245,6 +275,7 @@ namespace Manimal.LoadAmmoAnim.Patches
         private static void CreateAndSpawnBundleController(Player player, PortableRangeFinder bundleItem)
         {
             var session = LoadAmmoAnimState.Get(player);
+            Trace("drop finished, spawning bundle controller");
             try
             {
                 if (player.HandsController != null)
@@ -275,6 +306,7 @@ namespace Manimal.LoadAmmoAnim.Patches
                     return;
                 }
 
+                Trace($"controller created, gameobject={(controller.ControllerGameObject != null ? controller.ControllerGameObject.name : "null")}");
                 Player.UsableItemController.Setup<Player.UsableItemController>(controller, player);
 
                 // SpawnController calls controller.Spawn(1f, ...) which forces animator
@@ -293,6 +325,7 @@ namespace Manimal.LoadAmmoAnim.Patches
 
                 ApplyMeshSelection(player);
                 session.LoopCoroutine = player.StartCoroutine(AnimLoop(player, controller));
+                Trace($"bundle controller spawned, animator={(session.BundleAnimator != null ? "bound" : "missing")}");
             }
             catch (Exception ex)
             {
@@ -309,12 +342,28 @@ namespace Manimal.LoadAmmoAnim.Patches
             try
             {
                 var factory = Singleton<ItemFactory>.Instance;
-                if (factory == null) return null;
+                if (factory == null)
+                {
+                    Trace("bundle item: ItemFactory singleton is null");
+                    return null;
+                }
+
+                var templates = factory.ItemTemplates;
+                var hasTemplate = templates != null && templates.ContainsKey((MongoID)BundleItemTplId);
+                if (!hasTemplate)
+                {
+                    // the server mod registers this template. without it the client has nothing to build.
+                    Trace($"bundle item: template {BundleItemTplId} not in client item db ({templates?.Count ?? 0} templates). is LoadAmmoAnimServer installed and loading?");
+                    return null;
+                }
+
                 var item = factory.CreateItem(
                     MongoID.Generate(false).ToString(),
                     BundleItemTplId,
                     null);
-                return LoadAmmoBundle.IsBundleItem(item) ? item.TryCast<PortableRangeFinder>() : null;
+                var rangeFinder = LoadAmmoBundle.IsBundleItem(item) ? item.TryCast<PortableRangeFinder>() : null;
+                Trace($"bundle item: created={(item != null ? item.GetIl2CppType().Name : "null")} tpl={item?.TemplateId.ToString()} usable={rangeFinder != null}");
+                return rangeFinder;
             }
             catch (Exception ex)
             {
@@ -393,6 +442,7 @@ namespace Manimal.LoadAmmoAnim.Patches
                 if (mr.gameObject.name != targetMesh) continue;
                 mr.enabled = true;
                 session.ActiveRenderer = mr;
+                Trace($"mesh enabled: {targetMesh}");
                 return;
             }
 

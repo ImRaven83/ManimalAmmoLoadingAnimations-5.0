@@ -20,7 +20,7 @@ namespace Manimal.LoadAmmoAnim.CustomEFTData
 
         public static bool IsBundleItem(Item item)
         {
-            return item != null && item.TemplateId.ToString() == BundleItemTplId;
+            return item != null && string.Equals(item.TemplateId.ToString(), BundleItemTplId, StringComparison.OrdinalIgnoreCase);
         }
 
         // the UsableItemController currently holding our bundle item, or null. takes the base

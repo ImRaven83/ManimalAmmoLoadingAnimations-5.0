@@ -25,6 +25,7 @@ namespace Manimal.LoadAmmoAnim.Patches
             if (session == null) return;
 
             session.BundleAnimator = weaponPrefab.GetComponentInChildren<Animator>();
+            LoadAmmoAnimDriver.Trace($"bundle InitializeController: animator={(session.BundleAnimator != null ? session.BundleAnimator.name : "missing")}");
             LoadAmmoBundleAnimator.Initialize(session.BundleAnimator);
         }
     }
