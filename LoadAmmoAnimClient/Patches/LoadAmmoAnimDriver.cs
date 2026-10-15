@@ -175,10 +175,18 @@ namespace Manimal.LoadAmmoAnim.Patches
         // process-wide flag, the asset cache is shared across players.
         private static bool _bundleWarmed;
 
-        // step-by-step trace so a BepInEx log shows exactly where a session stops.
+        // step-by-step trace so a BepInEx log shows exactly where a session stops. debug level,
+        // turn on debug logging in BepInEx.cfg to see it.
         internal static void Trace(string message)
         {
-            Plugin.LogSource?.LogInfo($"[LoadAmmoAnim] {message}");
+            Plugin.LogSource?.LogDebug($"[LoadAmmoAnim] {message}");
+        }
+
+        // animator speed for a given per-round load time, scaled by the user's Animation Speed setting.
+        internal static float AnimSpeedFor(float secondsPerRound)
+        {
+            var multiplier = Plugin.AnimationSpeed?.Value ?? 1f;
+            return multiplier / secondsPerRound;
         }
 
         public static IEnumerator StartNextFrame(Player player)
@@ -321,7 +329,7 @@ namespace Manimal.LoadAmmoAnim.Patches
                 // tie playback to the player's current mag-drills speed.
                 var firearmsAnim = controller.FirearmsAnimator;
                 if (firearmsAnim != null && session.LoadOneAmmoSpeed > 0f)
-                    firearmsAnim.SetAnimationSpeed(1f / session.LoadOneAmmoSpeed);
+                    firearmsAnim.SetAnimationSpeed(AnimSpeedFor(session.LoadOneAmmoSpeed));
 
                 ApplyMeshSelection(player);
                 session.LoopCoroutine = player.StartCoroutine(AnimLoop(player, controller));
@@ -766,7 +774,7 @@ namespace Manimal.LoadAmmoAnim.Patches
                 session.LoadOneAmmoSpeed = cooldown;
                 var controller = session.ActiveController;
                 if (controller && controller.FirearmsAnimator != null)
-                    controller.FirearmsAnimator.SetAnimationSpeed(1f / cooldown);
+                    controller.FirearmsAnimator.SetAnimationSpeed(LoadAmmoAnimDriver.AnimSpeedFor(cooldown));
             }
 
             if (!session.DrawPhasePending) return true;
@@ -776,8 +784,9 @@ namespace Manimal.LoadAmmoAnim.Patches
             // is DrawClipSeconds * LoadOneAmmoSpeed. without this, fast loads finish
             // the draw and idle, slow loads cut it short.
             int normalMs = Mathf.CeilToInt(session.LoadOneAmmoSpeed * 1000f);
+            // a slower Animation Speed stretches the draw clip, so wait that much longer for it.
             int drawMs   = Mathf.RoundToInt(
-                LoadAmmoAnimDriver.DrawClipSeconds * session.LoadOneAmmoSpeed * 1000f);
+                LoadAmmoAnimDriver.DrawClipSeconds / LoadAmmoAnimDriver.AnimSpeedFor(session.LoadOneAmmoSpeed) * 1000f);
 
             __result = Il2CppSystem.Threading.Tasks.Task.Delay(drawMs + normalMs);
             return false;

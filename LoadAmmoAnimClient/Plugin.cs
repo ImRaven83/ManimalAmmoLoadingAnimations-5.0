@@ -1,4 +1,5 @@
 using BepInEx;
+using BepInEx.Configuration;
 using BepInEx.Logging;
 using BepInEx.Unity.IL2CPP;
 using Manimal.LoadAmmoAnim.Patches;
@@ -30,9 +31,23 @@ namespace Manimal.LoadAmmoAnim
 
         public static ManualLogSource LogSource;
 
+        // multiplier on the bundle animation's playback speed. 1 = matches the game's per-round
+        // load time, lower = slower. loading itself is not changed.
+        public static ConfigEntry<float> AnimationSpeed;
+
         public override void Load()
         {
             LogSource = Log;
+
+            AnimationSpeed = Config.Bind(
+                "General",
+                "Animation Speed",
+                1f,
+                new ConfigDescription(
+                    "Playback speed of the mag loading animation, relative to how fast rounds actually load. " +
+                    "Lower is slower (0.8 = 20% slower). Loading speed itself is unchanged, so below 1 the " +
+                    "animation runs a little behind the rounds going in.",
+                    new AcceptableValueRange<float>(0.5f, 1.5f)));
             LogSource.LogInfo("LoadAmmoAnim loaded!");
 
             // LoadMagazineProcess hooks — detect mag-loading sessions + extend the first-bullet
