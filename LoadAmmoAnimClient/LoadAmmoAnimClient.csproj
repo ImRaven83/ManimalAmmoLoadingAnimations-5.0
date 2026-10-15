@@ -51,6 +51,18 @@
       <HintPath>$(Interop)\Assembly-CSharp.dll</HintPath>
       <Private>false</Private>
     </Reference>
+    <Reference Include="DependencyManager">
+      <HintPath>$(Interop)\DependencyManager.dll</HintPath>
+      <Private>false</Private>
+    </Reference>
+    <Reference Include="Diz.Jobs">
+      <HintPath>$(Interop)\Diz.Jobs.dll</HintPath>
+      <Private>false</Private>
+    </Reference>
+    <Reference Include="Diz.Resources">
+      <HintPath>$(Interop)\Diz.Resources.dll</HintPath>
+      <Private>false</Private>
+    </Reference>
     <Reference Include="Comfort">
       <HintPath>$(Interop)\Comfort.dll</HintPath>
       <Private>false</Private>

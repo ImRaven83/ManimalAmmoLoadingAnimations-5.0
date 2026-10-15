@@ -25,10 +25,18 @@ SPT 5.0 (Single Player Tushonka) runs EFT 1.1 under **IL2CPP** with **BepInEx 6*
 
 - Retargeted to `net10.0` and the interop/BepInEx 6 references. `FikaPlayer` checks use `TryCast`. The network API (`IFikaNetworkManager`, `RegisterPacket`, `SendData`, `INetSerializable`) matches Fika's `dev-5.0` branch, which is still early work. Rebuild against the released Fika 5.0.
 
-## Verify against the 1.1 interop assemblies
+## Verified against the 1.1 interop assemblies
 
-The client side was ported without access to an EFT 1.1 install, so it has not been compiled against the game. Before release, check:
+The client now **compiles against the EFT 1.1 interop assemblies**, and every patch target was checked against the interop metadata (method exists, Harmony parameter names match).
 
-- **Obfuscated names from the 4.x client**: `Player.ItemHandsController.smethod_1`, `Player.ItemHandsController.Delegate8` and `LoadMagazineProcess.method_5`. They are marked `TODO(5.0)` in `LoadAmmoAnimDriver.cs`.
-- That `Proceed<Player.UsableItemController>` / `Setup<Player.UsableItemController>` / `smethod_1<Player.UsableItemController>` have AOT instantiations, i.e. the game uses them itself.
-- **The asset bundle** (`stanags_container.bundle`) and the `dependencyKeys` in `ServerModFiles/bundles.json`. If EFT 1.1 moved to a different Unity version, or renamed those dependency bundles, the bundle has to be re-exported.
+- 1.1 is deobfuscated:
+  - 4.x `smethod_1` is now `Player.ItemHandsController.CreateItemHandsController<T>`.
+  - 4.x `Delegate8` is now `ItemObjectFactoryDelegate(Item, Player)`.
+  - 4.x `LoadMagazineProcess.method_5` is the interop `Method_Private_Task_0`. The patch selects it by shape (the only parameterless method returning a plain `Task`) rather than by its generated name.
+- `EasyAssetsExtensions.RetainSeparateTask` takes an IL2CPP `IEnumerable<string>`.
+
+## Still to test in-game
+
+- That the generic instantiations `Proceed<Player.UsableItemController>`, `Setup<Player.UsableItemController>` and `CreateItemHandsController<Player.UsableItemController>` resolve at runtime.
+- The asset bundle loads. It was built with Unity 2022.3.43f1. Also check that the `dependencyKeys` in `ServerModFiles/bundles.json` still exist in the 1.1 client.
+- Fika compat could not be built (no `Fika.Core.dll`).

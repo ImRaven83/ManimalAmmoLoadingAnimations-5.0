@@ -4,7 +4,6 @@ using EFT;
 using EFT.InventoryLogic;
 using HarmonyLib;
 using Il2CppInterop.Runtime;
-using Il2CppInterop.Runtime.InteropTypes.Arrays;
 using Manimal.LoadAmmoAnim.CustomEFTData;
 using SPTushonka.Reflection.Il2Cpp;
 using SPTushonka.Reflection.Patching;
@@ -203,7 +202,7 @@ namespace Manimal.LoadAmmoAnim.Patches
                     var poolManager = Singleton<ObjectsFactory>.Instance;
                     if (poolManager?.EasyAssets != null)
                     {
-                        var retainTask = poolManager.EasyAssets.RetainSeparateTask(new Il2CppStringArray(new[] { usePrefab.path }));
+                        var retainTask = poolManager.EasyAssets.RetainSeparateTask(BundleKeys(usePrefab.path));
                         while (!retainTask.IsCompleted) yield return null;
 
                         if (!retainTask.IsFaulted && retainTask.Result?.LoadingJob != null)
@@ -258,24 +257,20 @@ namespace Manimal.LoadAmmoAnim.Patches
                     }
                 }
 
-                // the prefab factory delegate is bound straight to the native method, so no
-                // managed trampoline sits between the engine and ObjectsFactory.
-                // TODO(5.0): smethod_1 / Delegate8 are obfuscated names from the 4.x client.
-                // check them against the 1.1 interop Assembly-CSharp before release.
-                var prefabFactory = Il2CppSystem.Delegate.CreateDelegate(
-                        Il2CppType.Of<Player.ItemHandsController.Delegate8>(),
-                        Singleton<ObjectsFactory>.Instance,
-                        nameof(ObjectsFactory.CreateItemUsablePrefab))
-                    .Cast<Player.ItemHandsController.Delegate8>();
+                // 1.1 names: smethod_1 is CreateItemHandsController<T>, Delegate8 is
+                // ItemObjectFactoryDelegate. the factory reads UsePrefab, where our bundle lives.
+                var prefabFactory = DelegateSupport.ConvertDelegate<Player.ItemHandsController.ItemObjectFactoryDelegate>(
+                    new Func<Item, Player, GameObject>((item, owner) =>
+                        Singleton<ObjectsFactory>.Instance.CreateItemUsablePrefab(item, owner.Cast<IPlayer>())));
 
-                var controller = Player.ItemHandsController.smethod_1<Player.UsableItemController>(
+                var controller = Player.ItemHandsController.CreateItemHandsController<Player.UsableItemController>(
                     player,
                     bundleItem,
                     prefabFactory);
 
                 if (controller == null)
                 {
-                    Plugin.LogSource?.LogError("[LoadAmmoAnim] smethod_1 returned null controller.");
+                    Plugin.LogSource?.LogError("[LoadAmmoAnim] CreateItemHandsController returned null controller.");
                     session.IsOurAnimation = false;
                     return;
                 }
@@ -329,6 +324,15 @@ namespace Manimal.LoadAmmoAnim.Patches
             }
         }
 
+        // RetainSeparateTask takes an IL2CPP IEnumerable<string>. interop interfaces dont inherit,
+        // so build an IL2CPP list and cast it.
+        private static Il2CppSystem.Collections.Generic.IEnumerable<string> BundleKeys(string path)
+        {
+            var keys = new Il2CppSystem.Collections.Generic.List<string>(1);
+            keys.Add(path);
+            return keys.Cast<Il2CppSystem.Collections.Generic.IEnumerable<string>>();
+        }
+
         // preloads the bundle at raid start so the first reload doesnt hitch waiting
         // for it to load.
         public static IEnumerator WarmBundleAsync()
@@ -354,7 +358,7 @@ namespace Manimal.LoadAmmoAnim.Patches
             var poolManager = Singleton<ObjectsFactory>.Instance;
             if (poolManager?.EasyAssets == null) yield break;
 
-            var retainTask = poolManager.EasyAssets.RetainSeparateTask(new Il2CppStringArray(new[] { bundlePath }));
+            var retainTask = poolManager.EasyAssets.RetainSeparateTask(BundleKeys(bundlePath));
             while (!retainTask.IsCompleted) yield return null;
 
             if (!retainTask.IsFaulted && retainTask.Result?.LoadingJob != null)
@@ -678,15 +682,23 @@ namespace Manimal.LoadAmmoAnim.Patches
         }
     }
 
-    // method_5 on LoadMagazineProcess is the per-bullet wait. on the first bullet of a
+    // the per-bullet wait on LoadMagazineProcess (method_5 on 4.x). on the first bullet of a
     // session we extend it by the draw clip duration so the bundle's draw anim has time
     // to finish before a round actually loads. every bullet after gets the normal wait.
-    // TODO(5.0): method_5 is an obfuscated name from the 4.x client, check it against the
-    // 1.1 interop Assembly-CSharp before release.
     public class LoadMagazineDrawDelayPatch : ModulePatch
     {
-        protected override MethodBase GetTargetMethod() =>
-            AccessTools.Method(typeof(Player.PlayerInventoryController.LoadMagazineProcess), "method_5");
+        // the interop generator names it Method_Private_Task_0 in 1.1, which can shift between
+        // game builds. match on shape instead: the only parameterless method returning a plain Task.
+        protected override MethodBase GetTargetMethod()
+        {
+            foreach (var method in typeof(Player.PlayerInventoryController.LoadMagazineProcess).GetMethods(
+                         BindingFlags.Instance | BindingFlags.Public | BindingFlags.NonPublic | BindingFlags.DeclaredOnly))
+            {
+                if (method.ReturnType == typeof(Il2CppSystem.Threading.Tasks.Task) && method.GetParameters().Length == 0)
+                    return method;
+            }
+            return null;
+        }
 
         [PatchPrefix]
         public static bool Prefix(Player.PlayerInventoryController.LoadMagazineProcess __instance, ref Il2CppSystem.Threading.Tasks.Task __result)
