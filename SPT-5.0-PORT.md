@@ -35,8 +35,12 @@ The client now **compiles against the EFT 1.1 interop assemblies**, and every pa
   - 4.x `LoadMagazineProcess.method_5` is the interop `Method_Private_Task_0`. The patch selects it by shape (the only parameterless method returning a plain `Task`) rather than by its generated name.
 - `EasyAssetsExtensions.RetainSeparateTask` takes an IL2CPP `IEnumerable<string>`.
 
-## Still to test in-game
+## Tested in-game
 
-- That the generic instantiations `Proceed<Player.UsableItemController>`, `Setup<Player.UsableItemController>` and `CreateItemHandsController<Player.UsableItemController>` resolve at runtime.
-- The asset bundle loads. It was built with Unity 2022.3.43f1. Also check that the `dependencyKeys` in `ServerModFiles/bundles.json` still exist in the 1.1 client.
+The full chain works on SPT 5.0 / EFT 1.2.0.0.47965: bundle item created as a `PortableRangeFinder`, controller swapped through `CreateItemHandsController<Player.UsableItemController>`, animator bound, mesh enabled, animation plays and restores the weapon. The asset bundle (Unity 2022.3.43f1) and its `dependencyKeys` load.
+
+An **Animation Speed** setting (F12, 0.5-1.5) scales playback relative to the per-round load time. The per-round time itself comes from `BaseLoadTime` in globals, reduced by Mag Drills and the magazine.
+
+## Still to do
+
 - Fika compat could not be built (no `Fika.Core.dll`).
